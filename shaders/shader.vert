@@ -1,14 +1,10 @@
 #version 330 core
 
-layout(location = 0) in vec3 a_position;
-layout(location = 1) in vec4 a_color;
-
-out vec4 v_color;
-
-// uniform mat4 u_transform;
+out vec2 uv;
 
 void main() {
-    gl_Position = vec4(a_position, 1.0);
-    // gl_Position = u_transform * vec4(a_position, 1.0);
-    v_color = a_color;
+    vec2 pos = vec2(gl_VertexID % 2, gl_VertexID / 2) * 4.0 - 1;
+    uv = (pos + 1) * 0.5;
+
+    gl_Position = vec4(pos, 0, 1.0);
 }

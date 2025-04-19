@@ -75,7 +75,7 @@ main :: proc() {
 		SDL.WINDOWPOS_UNDEFINED,
 		WINDOW_WIDTH,
 		WINDOW_HEIGHT,
-		{.OPENGL},
+		{.OPENGL, .RESIZABLE},
 	)
 	if window == nil {
 		fmt.eprintln("Failed to create window")
@@ -92,10 +92,17 @@ main :: proc() {
 
 	gl.load_up_to(GL_VERSION_MAJOR, GL_VERSION_MINOR, SDL.gl_set_proc_address)
 
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+	vao: u32
+	gl.GenVertexArrays(1, &vao)
+	defer gl.DeleteVertexArrays(1, &vao)
+	gl.BindVertexArray(vao)
+
 	vertex_src, fragment_src :=
 		#load("shaders/shader.vert", string), #load("shaders/shader.frag", string)
 
-	// useful utility procedures that are part of vendor:OpenGl
 	program, program_ok := gl.load_shaders_source(vertex_src, fragment_src)
 	if !program_ok {
 		fmt.eprintln("Failed to create GLSL program")
@@ -108,16 +115,13 @@ main :: proc() {
 	uniforms := gl.get_uniforms_from_program(program)
 	defer delete(uniforms)
 
-	vao: u32
-	gl.GenVertexArrays(1, &vao);defer gl.DeleteVertexArrays(1, &vao)
-	gl.BindVertexArray(vao)
-
 	{
-		img := load_img("monkey.jpg")
+		img := load_img("monkeys.jpg")
 		defer stbi.image_free(raw_data(img.pixels))
 		gl.ActiveTexture(gl.TEXTURE0)
 		texture: u32
 		gl.GenTextures(1, &texture)
+		gl.BindTexture(gl.TEXTURE_2D, texture)
 
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
@@ -140,11 +144,11 @@ main :: proc() {
 
 	gl_check_errors()
 
-	start_tick := time.tick_now()
+	// start_tick := time.tick_now()
 
 	loop: for {
-		duration := time.tick_since(start_tick)
-		t := f32(time.duration_seconds(duration))
+		// duration := time.tick_since(start_tick)
+		// t := f32(time.duration_seconds(duration))
 
 		event: SDL.Event
 		for SDL.PollEvent(&event) {
@@ -160,7 +164,6 @@ main :: proc() {
 		}
 
 		{
-			// TODO: allow window resize
 			w, h: i32
 			SDL.GetWindowSize(window, &w, &h)
 			gl.Viewport(0, 0, w, h)
@@ -168,7 +171,7 @@ main :: proc() {
 		gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		// gl.DrawElements(gl.TRIANGLES, i32(len(indices)), gl.UNSIGNED_SHORT, nil)
+		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
 		SDL.GL_SwapWindow(window)
 	}
