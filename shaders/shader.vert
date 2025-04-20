@@ -1,5 +1,7 @@
 #version 330 core
 
+uniform vec2 mouse_pos;
+
 out vec2 uv;
 
 void main() {
@@ -14,5 +16,5 @@ void main() {
     // [{-1, -1}, {1, -1}, {-1, 1}, {1, 1}] (- 1.0)
     vec2 pos = (raw_pos * 2.0 - 1.0) * scale; // scale screen-space quad
 
-    gl_Position = vec4(pos, 0, 1.0);
+    gl_Position = vec4(pos + mouse_pos, 0, 1.0);
 }

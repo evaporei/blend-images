@@ -1,6 +1,7 @@
 package move_image
 
 import "core:fmt"
+import "core:math"
 import glm "core:math/linalg/glsl"
 import "core:slice"
 import "core:strings"
@@ -158,6 +159,23 @@ main :: proc() {
 				case .ESCAPE:
 					break loop
 				}
+			case .MOUSEBUTTONUP:
+				released_pos: [2]i32
+				SDL.GetMouseState(&released_pos[0], &released_pos[1])
+				// screen:
+				//    0
+				// 0    854
+				//   480
+				//
+				// opengl:
+				//    1
+				// -1 0 1
+				//   -1
+				remaped := [2]f32 {
+					math.remap(f32(released_pos.x), 0.0, WINDOW_WIDTH, -1.0, 1.0),
+					math.remap(f32(released_pos.y), 0.0, WINDOW_HEIGHT, 1.0, -1.0),
+				}
+				gl.Uniform2f(uniforms["mouse_pos"].location, remaped.x, remaped.y)
 			case .QUIT:
 				break loop
 			}
