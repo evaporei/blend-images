@@ -1,4 +1,4 @@
-package move_image
+package blend_images
 
 import "core:fmt"
 import "core:math"
@@ -70,7 +70,7 @@ main :: proc() {
 	assert(SDL.Init({.VIDEO}))
 	defer SDL.Quit()
 
-	window := SDL.CreateWindow("move image", WINDOW_WIDTH, WINDOW_HEIGHT, {.OPENGL, .RESIZABLE})
+	window := SDL.CreateWindow("blend images", WINDOW_WIDTH, WINDOW_HEIGHT, {.OPENGL, .RESIZABLE})
 	if window == nil {
 		fmt.eprintln("Failed to create window")
 		return
