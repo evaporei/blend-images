@@ -9,7 +9,7 @@ import "core:time"
 
 import stbi "./vendor/stb/image"
 import gl "vendor:OpenGL"
-import SDL "vendor:sdl2"
+import SDL "vendor:sdl3"
 
 Image :: struct {
 	pixels:        []u8,
@@ -67,29 +67,22 @@ main :: proc() {
 	WINDOW_WIDTH :: 854
 	WINDOW_HEIGHT :: 480
 
-	SDL.Init({.VIDEO})
+	assert(SDL.Init({.VIDEO}))
 	defer SDL.Quit()
 
-	window := SDL.CreateWindow(
-		"move image",
-		SDL.WINDOWPOS_UNDEFINED,
-		SDL.WINDOWPOS_UNDEFINED,
-		WINDOW_WIDTH,
-		WINDOW_HEIGHT,
-		{.OPENGL, .RESIZABLE},
-	)
+	window := SDL.CreateWindow("move image", WINDOW_WIDTH, WINDOW_HEIGHT, {.OPENGL, .RESIZABLE})
 	if window == nil {
 		fmt.eprintln("Failed to create window")
 		return
 	}
 	defer SDL.DestroyWindow(window)
 
-	SDL.GL_SetAttribute(.CONTEXT_PROFILE_MASK, i32(SDL.GLprofile.CORE))
+	SDL.GL_SetAttribute(.CONTEXT_PROFILE_MASK, i32(SDL.GL_CONTEXT_PROFILE_CORE))
 	SDL.GL_SetAttribute(.CONTEXT_MAJOR_VERSION, GL_VERSION_MAJOR)
 	SDL.GL_SetAttribute(.CONTEXT_MINOR_VERSION, GL_VERSION_MINOR)
 
 	gl_context := SDL.GL_CreateContext(window)
-	defer SDL.GL_DeleteContext(gl_context)
+	defer SDL.GL_DestroyContext(gl_context)
 
 	gl.load_up_to(GL_VERSION_MAJOR, GL_VERSION_MINOR, SDL.gl_set_proc_address)
 
@@ -154,14 +147,14 @@ main :: proc() {
 		event: SDL.Event
 		for SDL.PollEvent(&event) {
 			#partial switch event.type {
-			case .KEYDOWN:
-				#partial switch event.key.keysym.sym {
+			case .KEY_DOWN:
+				#partial switch event.key.scancode {
 				case .ESCAPE:
 					break loop
 				}
-			case .MOUSEBUTTONUP:
-				released_pos: [2]i32
-				SDL.GetMouseState(&released_pos[0], &released_pos[1])
+			case .MOUSE_BUTTON_UP:
+				released_pos: [2]f32
+				_mouse_flags := SDL.GetMouseState(&released_pos[0], &released_pos[1])
 				// screen:
 				//    0
 				// 0    854
@@ -172,8 +165,8 @@ main :: proc() {
 				// -1 0 1
 				//   -1
 				remaped := [2]f32 {
-					math.remap(f32(released_pos.x), 0.0, WINDOW_WIDTH, -1.0, 1.0),
-					math.remap(f32(released_pos.y), 0.0, WINDOW_HEIGHT, 1.0, -1.0),
+					math.remap(released_pos.x, 0.0, WINDOW_WIDTH, -1.0, 1.0),
+					math.remap(released_pos.y, 0.0, WINDOW_HEIGHT, 1.0, -1.0),
 				}
 				gl.Uniform2f(uniforms["mouse_pos"].location, remaped.x, remaped.y)
 			case .QUIT:
